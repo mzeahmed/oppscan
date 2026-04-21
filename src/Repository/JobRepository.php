@@ -18,6 +18,20 @@ class JobRepository extends ServiceEntityRepository
         parent::__construct($registry, Job::class);
     }
 
+    public function save(Job $job, bool $flush = true): void
+    {
+        $this->getEntityManager()->persist($job);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function existsByUrl(string $url): bool
+    {
+        return $this->count(['url' => $url]) > 0;
+    }
+
     //    /**
     //     * @return Job[] Returns an array of Job objects
     //     */
