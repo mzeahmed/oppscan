@@ -1,0 +1,8 @@
+.git
+node_modules
+var/*
+vendor/*
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.prod.yml
+.docker/

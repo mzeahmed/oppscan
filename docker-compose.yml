@@ -1,0 +1,6 @@
+services:
+    app:
+        container_name: oppscan_app
+        working_dir: /app
+        volumes:
+            - ./var:/app/var

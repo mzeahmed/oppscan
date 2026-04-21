@@ -1,0 +1,13 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: .docker/php/Dockerfile
+
+        restart: always
+
+        environment:
+            APP_ENV: prod
+            DATABASE_URL: "sqlite:///%kernel.project_dir%/var/data.db"
+
+        command: tail -f /dev/null

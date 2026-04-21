@@ -7,14 +7,22 @@
         "php": ">=8.2",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "doctrine/doctrine-bundle": "^2.18",
+        "doctrine/doctrine-migrations-bundle": "^3.7",
+        "doctrine/orm": "^3.6",
         "symfony/console": "7.4.*",
         "symfony/dotenv": "7.4.*",
         "symfony/flex": "^2",
         "symfony/framework-bundle": "7.4.*",
+        "symfony/http-client": "7.4.*",
+        "symfony/monolog-bundle": "^4.0",
         "symfony/runtime": "7.4.*",
         "symfony/yaml": "7.4.*"
     },
     "require-dev": {
+        "laravel/pint": "^1.29",
+        "symfony/maker-bundle": "^1.67",
+        "symfony/var-dumper": "7.4.*"
     },
     "config": {
         "allow-plugins": {
