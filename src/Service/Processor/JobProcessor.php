@@ -31,7 +31,28 @@ final class JobProcessor
      */
     public function process(JobDTO $dto): void
     {
-        if (! str_contains(strtolower($dto->title), 'php')) {
+        $title = strtolower($dto->title);
+        $desc  = strtolower($dto->description);
+
+        $keywords = [
+            'php',
+            'symfony',
+            'wordpress',
+            'backend',
+            'fullstack',
+            'api',
+        ];
+
+        $matches = false;
+
+        foreach ($keywords as $keyword) {
+            if (str_contains($title, $keyword) || str_contains($desc, $keyword)) {
+                $matches = true;
+                break;
+            }
+        }
+
+        if (! $matches) {
             return;
         }
 
@@ -53,7 +74,7 @@ final class JobProcessor
         $job = Job::fromDTO($dto);
         $job->setScore($score);
 
-        $this->jobRepository->save($job, false);
+        $this->jobRepository->save($job);
 
         $this->logger->info('Job sauvegardé : {title} (score: {score}, source: {source})', [
             'title' => $dto->title,

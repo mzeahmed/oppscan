@@ -9,35 +9,40 @@ use Psr\Log\LoggerInterface;
 
 final class NotificationService
 {
+    private const THRESHOLD = 70;
+
     public function __construct(
+        private readonly TelegramNotifier $telegram,
         private readonly LoggerInterface $logger,
     ) {
     }
 
-    /**
-     * Notifie qu'une offre pertinente a été détectée.
-     *
-     * En production: remplacer l'echo par un appel Slack webhook,
-     * symfony/mailer, ou tout autre canal de notification.
-     */
     public function notify(Job $job): void
     {
-        $message = \sprintf(
-            '[OPPSCAN] Nouvelle opportunité (%d/100) : %s — %s',
-            $job->getScore(),
+        if ($job->getScore() < self::THRESHOLD) {
+            return;
+        }
+
+        $message = $this->formatMessage($job);
+
+        $this->telegram->send($message);
+
+        $this->logger->info('Notification envoyée', [
+            'title' => $job->getTitle(),
+            'score' => $job->getScore(),
+        ]);
+    }
+
+    private function formatMessage(Job $job): string
+    {
+        return sprintf(
+            "*Nouvelle opportunité détectée*\n\n" .
+            "*Titre* : %s\n" .
+            "*Score* : %d/100\n\n" .
+            '%s',
             $job->getTitle(),
-            $job->getUrl(),
+            $job->getScore(),
+            $job->getUrl()
         );
-
-        $this->logger->info($message);
-
-        file_put_contents(
-            __DIR__ . '/../../../var/alerts.log',
-            $message . PHP_EOL,
-            FILE_APPEND
-        );
-
-        // Notification console visible lors de l'exécution de la commande
-        echo $message . \PHP_EOL;
     }
 }

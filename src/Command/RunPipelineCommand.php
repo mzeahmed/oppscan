@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Service\Processor\JobProcessor;
-use Doctrine\ORM\EntityManagerInterface;
 use App\Service\Provider\JobProviderInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -25,7 +24,6 @@ final class RunPipelineCommand extends Command
     public function __construct(
         private readonly iterable $providers,
         private readonly JobProcessor $processor,
-        private readonly EntityManagerInterface $em,
     ) {
         parent::__construct();
     }
@@ -51,8 +49,6 @@ final class RunPipelineCommand extends Command
         }
 
         $io->success(sprintf('Pipeline terminé. %d offre(s) traitée(s).', $total));
-
-        $this->em->flush();
 
         return Command::SUCCESS;
     }
