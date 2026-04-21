@@ -62,13 +62,13 @@ logs-prod: ## Logs des conteneurs (PROD)
 # ========================
 
 console: ## Lance une commande Symfony
-	docker exec -it $(APP_CONTAINER) php /app/bin/console $(filter-out $@,$(MAKECMDGOALS))
+	symfony console $(filter-out $@,$(MAKECMDGOALS))
 
 migrate: ## Lance les migrations
-	docker exec -it $(APP_CONTAINER) php /app/bin/console doctrine:migrations:migrate --no-interaction
+	symfony console doctrine:migrations:migrate --no-interaction
 
 run-pipeline: ## Lance le pipeline OPPSCAN
-	docker exec -it $(APP_CONTAINER) php /app/bin/console app:jobs:run
+	php /app/bin/console app:jobs:run
 
 # ========================
 # LOGS UTILES
