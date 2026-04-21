@@ -31,7 +31,7 @@ final class RunPipelineCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('OPPSCAN — Pipeline offres freelance PHP/Symfony');
+        $io->title('JOBSCAN — Pipeline offres freelance PHP/Symfony');
 
         $total = 0;
 

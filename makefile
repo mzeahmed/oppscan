@@ -1,7 +1,7 @@
 COMPOSE_DEV = docker compose -f docker-compose.yml -f docker-compose-override.yml
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
 
-APP_CONTAINER = oppscan_app
+APP_CONTAINER = jobscan_app
 
 help: ## Affiche la liste des commandes disponibles
 	@echo ""
@@ -67,18 +67,18 @@ console: ## Lance une commande Symfony
 migrate: ## Lance les migrations
 	symfony console doctrine:migrations:migrate --no-interaction
 
-run-pipeline: ## Lance le pipeline OPPSCAN
+run-pipeline: ## Lance le pipeline JOBSCAN
 	php bin/console app:jobs:run
 
 # ========================
 # LOGS UTILES
 # ========================
 
-alerts: ## Affiche les alertes OPPSCAN
+alerts: ## Affiche les alertes JOBSCAN
 	tail -f var/alerts.log
 
 pipeline-logs: ## Logs du cron (si configuré)
-	tail -f /var/log/oppscan.log
+	tail -f /var/log/jobscan.log
 
 pint: ## Lancement de Laravel Pint
 	composer run lint

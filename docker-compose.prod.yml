@@ -8,6 +8,6 @@ services:
 
         environment:
             APP_ENV: prod
-            DATABASE_URL: "sqlite:///%kernel.project_dir%/var/data.db"
+            DATABASE_URL: "sqlite:///%kernel.project_dir%/var/data_prod.db"
 
         command: tail -f /dev/null
