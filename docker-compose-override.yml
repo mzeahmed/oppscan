@@ -2,7 +2,7 @@ services:
     app:
         build:
             context: .
-            dockerfile: .docker/php/Dockerfile.dev
+            dockerfile: .docker/php/Dockerfile-dev
 
         volumes:
             - ./:/app
@@ -11,4 +11,6 @@ services:
         environment:
             APP_ENV: dev
 
-        command: bash
+        command: tail -f /dev/null
+        stdin_open: true
+        tty: true

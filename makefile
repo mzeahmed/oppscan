@@ -1,4 +1,4 @@
-COMPOSE_DEV = docker compose -f docker-compose.yml
+COMPOSE_DEV = docker compose -f docker-compose.yml -f docker-compose-override.yml
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
 
 APP_CONTAINER = oppscan_app
