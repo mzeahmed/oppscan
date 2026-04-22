@@ -11,6 +11,9 @@ services:
         environment:
             APP_ENV: dev
 
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+
         command: tail -f /dev/null
         stdin_open: true
         tty: true

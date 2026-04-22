@@ -7,44 +7,33 @@ namespace App\Service\Processor;
 use App\DTO\JobDTO;
 use App\Entity\Job;
 use Psr\Log\LoggerInterface;
+use App\Service\AI\OpenAIClient;
 use App\Repository\JobRepository;
-use App\Service\AI\PerplexityClient;
 use App\Service\Scoring\ScoringService;
 use App\Service\Notification\NotificationService;
 
 final class JobProcessor
 {
-    // Score minimum pour déclencher une notification
     private const NOTIFICATION_THRESHOLD = 70;
+    private const AI_PRESCORE_THRESHOLD = 15;
 
     public function __construct(
         private readonly JobRepository $jobRepository,
-        private readonly PerplexityClient $perplexityClient,
+        private readonly OpenAIClient $openAIClient,
         private readonly ScoringService $scoringService,
         private readonly NotificationService $notificationService,
         private readonly LoggerInterface $logger,
     ) {
     }
 
-    /**
-     * Traite une offre : déduplication → analyse IA → scoring → persistance → notification.
-     */
     public function process(JobDTO $dto): void
     {
         $title = strtolower($dto->title);
-        $desc  = strtolower($dto->description);
+        $desc = strtolower($dto->description);
 
-        $keywords = [
-            'php',
-            'symfony',
-            'wordpress',
-            'backend',
-            'fullstack',
-            'api',
-        ];
+        $keywords = ['php', 'symfony', 'wordpress', 'backend', 'fullstack', 'api'];
 
         $matches = false;
-
         foreach ($keywords as $keyword) {
             if (str_contains($title, $keyword) || str_contains($desc, $keyword)) {
                 $matches = true;
@@ -52,7 +41,7 @@ final class JobProcessor
             }
         }
 
-        if (! $matches) {
+        if (!$matches) {
             return;
         }
 
@@ -68,7 +57,18 @@ final class JobProcessor
             return;
         }
 
-        $aiData = $this->perplexityClient->analyze($dto->description);
+        $preScore = $this->scoringService->preScore($dto);
+
+        if ($preScore < self::AI_PRESCORE_THRESHOLD) {
+            $this->logger->debug('Pré-score insuffisant ({score}), analyse IA ignorée.', [
+                'score' => $preScore,
+                'title' => $dto->title,
+            ]);
+
+            return;
+        }
+
+        $aiData = $this->openAIClient->analyze($dto->description);
         $score = $this->scoringService->compute($dto, $aiData);
 
         $job = Job::fromDTO($dto);
@@ -82,8 +82,8 @@ final class JobProcessor
             'source' => $dto->source,
         ]);
 
-        if ($score >= self::NOTIFICATION_THRESHOLD) {
-            $this->notificationService->notify($job);
-        }
+        // if ($score >= self::NOTIFICATION_THRESHOLD) {
+        $this->notificationService->notify($job);
+        // }
     }
 }

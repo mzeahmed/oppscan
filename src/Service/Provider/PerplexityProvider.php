@@ -8,12 +8,10 @@ use App\DTO\JobDTO;
 use App\Service\AI\PerplexityClient;
 
 /**
- * Fournisseur Perplexity.
- *
  * Utilise le moteur de recherche IA de Perplexity pour trouver des offres
  * récentes sans avoir à scraper manuellement des job boards.
  */
-final class PerplexityProvider implements JobProviderInterface
+final class PerplexityProvider /** implements JobProviderInterface */
 {
     public function __construct(
         private readonly PerplexityClient $perplexityClient,

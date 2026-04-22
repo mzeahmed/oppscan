@@ -9,30 +9,84 @@ use App\DTO\JobDTO;
 final class ScoringService
 {
     /**
-     * Calcule un score de pertinence sur 100.
+     * Score rapide sans IA, utilisé pour décider si l'analyse IA vaut le coup.
+     */
+    public function preScore(JobDTO $job): int
+    {
+        $score = 0;
+        $text = strtolower($job->title . ' ' . $job->description);
+
+        if (str_contains($text, 'php')) {
+            $score += 10;
+        }
+
+        if (str_contains($text, 'symfony')) {
+            $score += 15;
+        }
+
+        if (str_contains($text, 'wordpress')) {
+            $score += 10;
+        }
+
+        if (str_contains($text, 'remote') || str_contains($text, 'télétravail') || str_contains($text, 'teletravail')) {
+            $score += 5;
+        }
+
+        if (str_contains($text, 'stage')) {
+            $score -= 50;
+        }
+
+        if (str_contains($text, 'alternance')) {
+            $score -= 50;
+        }
+
+        return $score;
+    }
+
+    /**
+     * Score final sur 100, basé sur les données IA enrichies.
      *
-     * Règles :
+     * Bonus :
      *   PHP dans le titre        → +20
      *   Symfony dans la stack    → +30
      *   WordPress dans la stack  → +20
+     *   Freelance                → +15
+     *   CDI                      → +10
      *   Remote                   → +10
      *   Offre récente            → +20
+     *   Senior                   → +10
+     *   Mission                  → +10
+     *   Urgent / ASAP            → +15
+     *
+     * Malus :
+     *   Stage                    → -50
+     *   Alternance               → -50
+     *   Junior                   → -20
      */
     public function compute(JobDTO $job, array $ai): int
     {
         $score = 0;
+        $desc = strtolower($job->description);
 
         if (str_contains(strtolower($job->title), 'php')) {
             $score += 20;
         }
 
         $stack = array_map('strtolower', $ai['stack'] ?? []);
-        if (in_array('symfony', $stack, true)) {
+
+        if (\in_array('symfony', $stack, true)) {
             $score += 30;
         }
 
-        if ($ai['wordpress'] ?? false) {
+        if (\in_array('wordpress', $stack, true)) {
             $score += 20;
+        }
+
+        $contractType = $ai['contract_type'] ?? 'unknown';
+        if ('freelance' === $contractType || ($ai['freelance'] ?? false)) {
+            $score += 15;
+        } elseif ('cdi' === $contractType) {
+            $score += 10;
         }
 
         if ($ai['remote'] ?? false) {
@@ -43,39 +97,32 @@ final class ScoringService
             $score += 20;
         }
 
-        $description = strtolower($job->description);
-
-        // BONUS pertinence
-        if (str_contains($description, 'senior')) {
+        $seniority = $ai['seniority'] ?? 'unknown';
+        if ('senior' === $seniority || str_contains($desc, 'senior') || str_contains($desc, 'confirmé')) {
             $score += 10;
         }
 
-        if (str_contains($description, 'mission')) {
+        if (str_contains($desc, 'mission')) {
             $score += 10;
         }
 
-        // BONUS opportunité rapide
-        if (str_contains($description, 'urgent')) {
+        if (str_contains($desc, 'urgent') || str_contains($desc, 'asap')) {
             $score += 15;
         }
 
-        if (str_contains($description, 'asap')) {
-            $score += 15;
-        }
-
-        // MALUS (très important)
-        if (str_contains($description, 'stage')) {
+        // Malus
+        if (str_contains($desc, 'stage')) {
             $score -= 50;
         }
 
-        if (str_contains($description, 'alternance')) {
+        if (str_contains($desc, 'alternance')) {
             $score -= 50;
         }
 
-        if (str_contains($description, 'junior')) {
+        if ('junior' === $seniority || str_contains($desc, 'junior')) {
             $score -= 20;
         }
 
-        return min($score, 100);
+        return max(0, min($score, 100));
     }
 }

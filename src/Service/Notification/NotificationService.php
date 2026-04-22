@@ -19,9 +19,9 @@ final class NotificationService
 
     public function notify(Job $job): void
     {
-        if ($job->getScore() < self::THRESHOLD) {
-            return;
-        }
+        // if ($job->getScore() < self::THRESHOLD) {
+        //     return;
+        // }
 
         $message = $this->formatMessage($job);
 

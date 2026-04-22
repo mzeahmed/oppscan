@@ -30,6 +30,8 @@ final class RunPipelineCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $start = microtime(true);
+
         $io = new SymfonyStyle($input, $output);
         $io->title('JOBSCAN — Pipeline offres freelance PHP/Symfony');
 
@@ -48,7 +50,10 @@ final class RunPipelineCommand extends Command
             }
         }
 
-        $io->success(sprintf('Pipeline terminé. %d offre(s) traitée(s).', $total));
+        $end = microtime(true);
+        $time = $end - $start;
+
+        $io->success(sprintf('Pipeline terminé en %.2f s. %d offre(s) traitée(s).', $time, $total));
 
         return Command::SUCCESS;
     }
