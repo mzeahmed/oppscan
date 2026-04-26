@@ -1,4 +1,4 @@
-COMPOSE_DEV = docker compose -f docker-compose.yml -f docker-compose-override.yml
+COMPOSE = docker compose -f docker-compose.yml
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
 
 APP_CONTAINER = jobscan_app
@@ -11,51 +11,28 @@ help: ## Affiche la liste des commandes disponibles
 		| awk 'BEGIN {FS = ":.*?## "}; {printf " %-28s %s\n", $$1, $$2}'
 	@echo ""
 
-# ========================
-# DEV
-# ========================
+build: ## Build les conteneurs
+	$(COMPOSE) build
 
-build: ## Build les conteneurs (DEV)
-	$(COMPOSE_DEV) build
+up: lms-start build ## Démarre les conteneurs
+	$(COMPOSE) up -d
 
-up: build ## Démarre les conteneurs (DEV)
-	$(COMPOSE_DEV) up -d
+up-fast: ## Démarre sans rebuild
+	$(COMPOSE) up -d
 
-up-fast: ## Démarre sans rebuild (DEV)
-	$(COMPOSE_DEV) up -d
+down: lms-stop ## Stop les conteneurs
+	$(COMPOSE) down
 
-down: ## Stop les conteneurs (DEV)
-	$(COMPOSE_DEV) down
+restart: down up ## Redémarre les conteneurs
 
-restart: down up ## Redémarre les conteneurs (DEV)
+logs: ## Logs des conteneurs
+	$(COMPOSE) logs -f
 
-logs: ## Logs des conteneurs (DEV)
-	$(COMPOSE_DEV) logs -f
+ps: ## Liste les conteneurs
+	$(COMPOSE) ps
 
-ps: ## Liste les conteneurs (DEV)
-	$(COMPOSE_DEV) ps
-
-bash: ## Accède au container app (DEV)
+bash: ## Accède au container app
 	docker exec -it $(APP_CONTAINER) bash
-
-# ========================
-# PROD
-# ========================
-
-build-prod: ## Build les conteneurs (PROD)
-	$(COMPOSE_PROD) build
-
-up-prod: build-prod ## Démarre les conteneurs (PROD)
-	$(COMPOSE_PROD) up -d
-
-up-prod-fast: ## Démarre sans rebuild (PROD)
-	$(COMPOSE_PROD) up -d
-
-down-prod: ## Stop les conteneurs (PROD)
-	$(COMPOSE_PROD) down
-
-logs-prod: ## Logs des conteneurs (PROD)
-	$(COMPOSE_PROD) logs -f
 
 # ========================
 # SYMFONY
@@ -69,6 +46,16 @@ migrate: ## Lance les migrations
 
 run-pipeline: ## Lance le pipeline JOBSCAN
 	php bin/console app:jobs:run
+
+# ========================
+# LM STUDIO
+# ========================
+
+lms-start: ## Démarre le serveur de LM Studio
+	lms server start
+
+lms-stop: ## Arrête le serveur de LM Studio
+	lms server stop
 
 # ========================
 # LOGS UTILES

@@ -7,7 +7,7 @@ namespace App\Service\Processor;
 use App\DTO\JobDTO;
 use App\Entity\Job;
 use Psr\Log\LoggerInterface;
-use App\Service\AI\OpenAIClient;
+use App\Service\AI\AIClient;
 use App\Repository\JobRepository;
 use App\Service\Scoring\ScoringService;
 use App\Service\Notification\NotificationService;
@@ -19,7 +19,7 @@ final class JobProcessor
 
     public function __construct(
         private readonly JobRepository $jobRepository,
-        private readonly OpenAIClient $openAIClient,
+        private readonly AIClient $AIClient,
         private readonly ScoringService $scoringService,
         private readonly NotificationService $notificationService,
         private readonly LoggerInterface $logger,
@@ -68,7 +68,7 @@ final class JobProcessor
             return;
         }
 
-        $aiData = $this->openAIClient->analyze($dto->description);
+        $aiData = $this->AIClient->analyze($dto->description);
         $score = $this->scoringService->compute($dto, $aiData);
 
         $job = Job::fromDTO($dto);

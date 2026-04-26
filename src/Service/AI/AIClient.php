@@ -7,7 +7,7 @@ namespace App\Service\AI;
 use Psr\Log\LoggerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-final class OpenAIClient
+final class AIClient
 {
     public function __construct(
         private readonly HttpClientInterface $httpClient,
@@ -21,6 +21,7 @@ final class OpenAIClient
     public function analyze(string $text): array
     {
         $text = $this->cleanText($text);
+        $text = mb_substr($text, 0, 3000);
 
         $systemPrompt = <<<'PROMPT'
             Tu es un extracteur de données d'offres d'emploi.
@@ -75,10 +76,11 @@ final class OpenAIClient
                             ['role' => 'system', 'content' => $systemPrompt],
                             ['role' => 'user', 'content' => $text],
                         ],
-                        'temperature' => 0.1,
-                        'max_tokens' => 512,
+                        'temperature' => 0,
+                        'max_tokens' => 256,
                     ],
-                    'timeout' => 30,
+                    'timeout' => 120,
+                    'max_duration' => 120,
                 ]);
 
             $data = $response->toArray(false);
@@ -97,11 +99,11 @@ final class OpenAIClient
                 }
             }
 
-            $this->logger->warning('OpenAIClient: réponse non parseable, fallback heuristique.', [
+            $this->logger->warning('AIClient: réponse non parseable, fallback heuristique.', [
                 'content' => $content,
             ]);
         } catch (\Throwable $e) {
-            $this->logger->warning('OpenAIClient::analyze() a échoué, fallback heuristique.', [
+            $this->logger->warning('AIClient::analyze() a échoué, fallback heuristique.', [
                 'error' => $e->getMessage(),
             ]);
         }
@@ -123,7 +125,7 @@ final class OpenAIClient
 
         return [
             'stack' => array_values(array_unique(array_map(
-                static fn($item) => strtolower(trim((string) $item)),
+                static fn ($item) => strtolower(trim((string) $item)),
                 (array) ($data['stack'] ?? [])
             ))),
             'contract_type' => $contractType,
@@ -192,7 +194,7 @@ final class OpenAIClient
 
         return array_values(array_filter(
             $known,
-            static fn(string $tech) => str_contains($text, $tech)
+            static fn (string $tech) => str_contains($text, $tech)
         ));
     }
 
@@ -215,12 +217,9 @@ final class OpenAIClient
 
     private function cleanText(string $text): string
     {
-        // supprime emojis et caractères bizarres
-        $text = preg_replace('/[^\PC\s]/u', '', $text);
-
-        // normalise espaces
+        $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $text = preg_replace('/\s+/', ' ', $text);
 
-        return trim($text);
+        return trim((string) $text);
     }
 }

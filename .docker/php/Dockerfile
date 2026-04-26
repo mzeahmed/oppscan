@@ -13,6 +13,6 @@ WORKDIR /app
 
 COPY . /app
 
-RUN composer install --no-dev --optimize-autoloader
+RUN APP_ENV=prod composer install --no-dev --optimize-autoloader
 
 RUN mkdir -p var && chmod -R 775 var

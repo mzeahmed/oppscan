@@ -2,17 +2,19 @@
 
 Agrégateur d'opportunités tech (freelance ou CDI) orienté PHP / Symfony / WordPress, avec scoring IA local.
 
-JOBSCAN récupère des offres depuis des providers configurés, filtre les opportunités pertinentes, les analyse avec **LM Studio** via son API compatible OpenAI, leur attribue un score de pertinence, puis déclenche une alerte pour les meilleures opportunités.
+JOBSCAN récupère des offres depuis des providers configurés (flux RSS et recherche web dynamique), filtre les opportunités pertinentes, les analyse avec **LM Studio** via son API compatible OpenAI, leur attribue un score de pertinence, puis déclenche une alerte pour les meilleures opportunités.
+
+Fonctionne **100% en local**, sans aucune dépendance externe payante.
 
 ---
 
-## Fonctionnement
+## Architecture
 
 ```text
-Provider -> JobProcessor -> OpenAIClient (LM Studio) -> ScoringService -> DB -> Notification
+Providers (RSS + SearXNG) → JobProcessor → AIClient (LM Studio) → ScoringService → DB → Notification
 ```
 
-1. **Provider** : récupère les offres depuis une ou plusieurs sources
+1. **Providers** : récupèrent les offres depuis des flux RSS et/ou la recherche web via SearXNG
 2. **Processor** : filtre les doublons et les offres hors scope
 3. **Analyse IA** : LM Studio analyse l'offre et extrait des données structurées
 4. **Scoring** : attribution d'un score /100 selon la stack, le remote, le type de contrat, l'urgence, etc.
@@ -26,9 +28,10 @@ Provider -> JobProcessor -> OpenAIClient (LM Studio) -> ScoringService -> DB -> 
 * PHP 8.3+
 * Symfony
 * SQLite
-* LM Studio (analyse IA locale)
+* LM Studio (analyse IA locale, API compatible OpenAI)
+* SearXNG (moteur de recherche open-source local)
 * Telegram Bot API (notifications)
-* Docker (optionnel)
+* Docker
 
 ---
 
@@ -38,7 +41,7 @@ Provider -> JobProcessor -> OpenAIClient (LM Studio) -> ScoringService -> DB -> 
 * Composer
 * Symfony CLI
 * SQLite
-* Docker (optionnel)
+* Docker
 * **LM Studio** installé localement
 
 ---
@@ -65,23 +68,95 @@ make migrate
 Configurer `.env.local` :
 
 ```dotenv
-OPENAI_API_BASE=http://localhost:1234/v1
-OPENAI_API_KEY=lmstudio
-OPENAI_MODEL=local-model
+# LM Studio (IA locale)
+AI_API_BASE=http://localhost:1234/v1
+AI_API_KEY=lmstudio
+AI_MODEL=local-model
 
+# Telegram
 TELEGRAM_BOT_TOKEN=...
 TELEGRAM_CHAT_ID=...
 
+# SearXNG
+SEARXNG_URL=http://localhost:8080      # hors Docker
+#SEARXNG_URL=http://searxng:8080       # dans Docker
+
+# Flux RSS (optionnel)
 JOB_FEED_URL_1=
 JOB_FEED_URL_2=
 JOB_FEED_URL_3=
 ```
 
-### Explication des variables IA
+---
 
-* `OPENAI_API_BASE` : URL du serveur local LM Studio
-* `OPENAI_API_KEY` : valeur arbitraire si l'authentification n'est pas activée dans LM Studio
-* `OPENAI_MODEL` : nom exact du modèle servi par LM Studio
+## Providers
+
+JOBSCAN supporte plusieurs providers, chacun implémentant `JobProviderInterface`.
+
+### RsFeedProvider
+
+Récupère les offres depuis des **flux RSS/Atom** configurés via les variables `JOB_FEED_URL_*`.
+
+* Source statique, passive
+* Dépend de la qualité et de la fraîcheur des flux fournis
+* Fonctionne hors ligne si les URLs sont accessibles
+
+### SearxProvider
+
+Effectue des **recherches web dynamiques** via SearXNG en lançant une série de requêtes ciblées (ex : `php symfony remote job`, `mission freelance php`).
+
+* Résultats issus du web en temps réel
+* Filtrage automatique des résultats non pertinents (documentations, tutoriels, etc.)
+* Aucun coût d'API, aucune clé requise
+
+Les deux providers sont complémentaires. Il est possible d'en ajouter d'autres en implémentant `JobProviderInterface`.
+
+---
+
+## SearXNG
+
+[SearXNG](https://github.com/searxng/searxng) est un méta-moteur de recherche open-source, auto-hébergé, qui agrège les résultats de plusieurs moteurs (Google, Bing, DuckDuckGo, etc.) sans tracking ni coût d'API.
+
+JOBSCAN l'utilise comme moteur de recherche d'offres d'emploi en remplacement de tout service tiers payant.
+
+**Pourquoi SearXNG ?**
+
+* Gratuit, open-source, sans clé API
+* Hébergé localement → aucune fuite de données
+* Résultats web en temps réel
+* Compatible JSON natif
+
+### Installation SearXNG (Docker)
+
+SearXNG est inclus dans le `docker-compose.yml` du projet :
+
+```yaml
+searxng:
+    image: searxng/searxng
+    container_name: jobscan_searxng
+    ports:
+        - "8080:8080"
+    volumes:
+        - ./.docker/searxng/settings.yml:/etc/searxng/settings.yml
+    environment:
+        SEARXNG_BASE_URL: http://localhost:8080
+```
+
+Le conteneur `app` y accède via le réseau Docker interne :
+
+```dotenv
+SEARXNG_URL=http://searxng:8080
+```
+
+### Vérifier que SearXNG fonctionne
+
+```bash
+curl "http://localhost:8080/search?q=php+symfony+remote&format=json"
+```
+
+Une réponse JSON contenant un tableau `results` confirme que SearXNG est opérationnel.
+
+> **Note** : SearXNG doit avoir `format: json` activé dans `.docker/searxng/settings.yml` pour retourner des réponses JSON.
 
 ---
 
@@ -91,65 +166,33 @@ JOBSCAN utilise **LM Studio** pour l'analyse locale des offres via son API compa
 
 ### Installer LM Studio
 
-Télécharge et installe LM Studio depuis le site officiel, ou via le paquet `.deb` si tu es sur Linux.
-
-Exemple sur Ubuntu/Debian :
+Télécharge et installe LM Studio depuis le site officiel, ou via le paquet `.deb` sur Linux :
 
 ```bash
 sudo apt install ./LM-Studio-0.4.12-1-x64.deb
 ```
 
----
-
 ### Lancer LM Studio
-
-Tu peux lancer l'application avec :
 
 ```bash
 lm-studio
 ```
 
----
-
 ### Démarrer le serveur API local
-
-Une fois LM Studio installé, tu peux démarrer le serveur local avec :
 
 ```bash
 lms server start
 ```
 
-Le serveur API écoute généralement sur :
+Le serveur écoute sur `http://localhost:1234` par défaut.
 
-```text
-http://localhost:1234
-```
-
----
-
-### Vérifier que le serveur fonctionne
+### Vérifier le serveur
 
 ```bash
 curl http://localhost:1234/v1/models
 ```
 
-Si tout est OK, tu dois recevoir un JSON contenant les modèles disponibles.
-
----
-
-### Récupérer le nom exact du modèle
-
-Le champ `id` retourné par :
-
-```bash
-curl http://localhost:1234/v1/models
-```
-
-doit être utilisé dans :
-
-```dotenv
-OPENAI_MODEL=...
-```
+Le champ `id` retourné doit être utilisé dans `AI_MODEL`.
 
 ---
 
@@ -163,7 +206,7 @@ make run-pipeline
 php bin/console app:jobs:run
 ```
 
-### Voir les alertes en temps réel
+### Suivre les alertes en temps réel
 
 ```bash
 make alerts
@@ -179,15 +222,13 @@ make run-pipeline
 make alerts
 ```
 
-> Si tu exécutes Symfony dans Docker mais LM Studio sur la machine hôte, adapte `OPENAI_API_BASE` et la configuration Docker en conséquence.
+> Si LM Studio tourne sur la machine hôte et Symfony dans Docker, `AI_API_BASE` est automatiquement configuré sur `http://host.docker.internal:1234/v1` dans le `docker-compose.yml`.
 
 ---
 
 ## Automatisation (Cron)
 
-JOBSCAN peut tourner de manière entièrement autonome via un cron local. Une fois configuré, il surveille en continu les nouvelles opportunités, les analyse et déclenche des notifications sans aucune intervention manuelle.
-
-### Configurer le cron
+JOBSCAN peut tourner de manière entièrement autonome via un cron local.
 
 ```bash
 crontab -e
@@ -219,13 +260,13 @@ tail -f var/cron.log
 systemctl status cron
 ```
 
-> **Note** : adapter le chemin du projet, s'assurer que PHP est dans le `PATH` (`which php`), et que LM Studio est lancé pour que l'analyse IA fonctionne.
+> Adapter le chemin du projet et s'assurer que PHP est dans le `PATH` (`which php`). LM Studio et SearXNG doivent être démarrés pour que le pipeline complet fonctionne.
 
 ---
 
 ## Analyse IA
 
-L'analyse est effectuée par `OpenAIClient`, qui pointe vers **LM Studio**.
+L'analyse est effectuée par `AIClient`, qui pointe vers **LM Studio**.
 
 L'IA extrait notamment :
 
@@ -264,8 +305,6 @@ Une notification est déclenchée à partir de **70/100**.
 
 ## Notifications Telegram
 
-Les opportunités les mieux scorées peuvent être envoyées sur Telegram.
-
 Variables à configurer :
 
 ```dotenv
@@ -296,8 +335,6 @@ SQLite, fichier par environnement :
 * dev : `var/data_dev.db`
 * prod : `var/data_prod.db`
 
-Exemple d'inspection :
-
 ```bash
 sqlite3 var/data_dev.db "SELECT id, title, score, source FROM job ORDER BY score DESC;"
 ```
@@ -306,12 +343,11 @@ sqlite3 var/data_dev.db "SELECT id, title, score, source FROM job ORDER BY score
 
 ## État actuel du projet
 
-Actuellement :
-
-* **LM Studio** est utilisé pour l'analyse IA
-* **Perplexity** peut rester présent dans le codebase mais n'est pas utilisé dans le pipeline principal
-* la qualité des résultats dépend des providers activés
+* **LM Studio** est utilisé pour l'analyse IA locale
+* **SearXNG** est le moteur de recherche d'offres web
+* **RsFeedProvider** et **SearxProvider** sont actifs dans le pipeline
 * le pipeline fonctionne même sans IA grâce au fallback heuristique
+* aucune dépendance externe payante (pas d'API tierce, pas de clé requise)
 
 ---
 
@@ -319,4 +355,8 @@ Actuellement :
 
 JOBSCAN n'est pas un job board.
 
-C'est un filtre intelligent qui transforme un flux d'offres brutes en opportunités réellement exploitables.
+C'est un filtre intelligent qui transforme un flux d'offres brutes en opportunités réellement exploitables — entièrement en local, sans aucun service externe payant.
+
+```text
+SearXNG (search) + RSS (feed) → Symfony (pipeline) → LM Studio (IA) → Score → Telegram
+```

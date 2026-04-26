@@ -3,7 +3,7 @@ FROM php:8.3-cli
 RUN apt-get update && apt-get install -y \
     git unzip zip curl \
     libzip-dev libxml2-dev \
-    libpq-dev postgresql-client \
+    libpq-dev postgresql-AIClient \
     && rm -rf /var/lib/apt/lists/*
 
 # Extensions PHP (inclut PostgreSQL)

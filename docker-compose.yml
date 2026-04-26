@@ -1,6 +1,30 @@
 services:
     app:
+        build:
+            context: .
+            dockerfile: .docker/php/Dockerfile
         container_name: jobscan_app
         working_dir: /app
         volumes:
+            - ./:/app
             - ./var:/app/var
+        environment:
+            APP_ENV: dev
+            DATABASE_URL: "sqlite:///%kernel.project_dir%/var/data.db"
+            SEARXNG_URL: http://searxng:8080
+            AI_API_BASE: http://host.docker.internal:1234/v1
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        depends_on:
+            - searxng
+        command: tail -f /dev/null
+
+    searxng:
+        image: searxng/searxng
+        container_name: jobscan_searxng
+        ports:
+            - "8080:8080"
+        volumes:
+            - ./.docker/searxng/settings.yml:/etc/searxng/settings.yml
+        environment:
+            SEARXNG_BASE_URL: http://localhost:8080

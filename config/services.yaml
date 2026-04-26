@@ -3,13 +3,15 @@
 parameters:
     telegram.bot_token: '%env(TELEGRAM_BOT_TOKEN)%'
     telegram.chat_id: '%env(TELEGRAM_CHAT_ID)%'
-    openai.api_base: '%env(OPENAI_API_BASE)%'
-    openai.api_key: '%env(OPENAI_API_KEY)%'
-    openai.model: '%env(OPENAI_MODEL)%'
+    ai.api_base: '%env(AI_API_BASE)%'
+    ai.api_key: '%env(AI_API_KEY)%'
+    ai.model: '%env(AI_MODEL)%'
     app.job_feed_urls:
         - '%env(default::JOB_FEED_URL_1)%'
         - '%env(default::JOB_FEED_URL_2)%'
 #        - '%env(default::JOB_FEED_URL_3)%'
+#        - '%env(default::JOB_FEED_URL_4)%'
+#        - '%env(default::JOB_FEED_URL_5)%'
 
 services:
     _defaults:
@@ -32,13 +34,18 @@ services:
             $botToken: '%telegram.bot_token%'
             $chatId: '%telegram.chat_id%'
 
-    App\Service\AI\OpenAIClient:
+    App\Service\AI\AIClient:
         arguments:
-            $apiBase: '%openai.api_base%'
-            $apiKey: '%openai.api_key%'
-            $model: '%openai.model%'
+            $apiBase: '%ai.api_base%'
+            $apiKey: '%ai.api_key%'
+            $model: '%ai.model%'
 
     App\Service\Provider\RsFeedProvider:
         arguments:
             $feedUrls: '%app.job_feed_urls%'
         tags: ['app.job_provider']
+
+    App\Service\Provider\SearxProvider:
+        arguments:
+            $baseUrl: '%env(SEARXNG_URL)%'
+        tags: [ 'app.job_provider' ]
