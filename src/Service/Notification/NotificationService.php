@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\Notification;
 
 use App\Entity\Job;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 
 final class NotificationService
@@ -14,18 +15,29 @@ final class NotificationService
     public function __construct(
         private readonly TelegramNotifier $telegram,
         private readonly LoggerInterface $logger,
+        private readonly EntityManagerInterface $em,
     ) {
     }
 
     public function notify(Job $job): void
     {
+        if ($job->getNotifiedAt() !== null) {
+            $this->logger->debug('Notification ignorée : déjà envoyée.', [
+                'title' => $job->getTitle(),
+                'notified_at' => $job->getNotifiedAt()->format('Y-m-d H:i:s'),
+            ]);
+
+            return;
+        }
+
         if ($job->getScore() < self::THRESHOLD) {
             return;
         }
 
-        $message = $this->formatMessage($job);
+        $this->telegram->send($this->formatMessage($job));
 
-        $this->telegram->send($message);
+        $job->markAsNotified();
+        $this->em->flush();
 
         $this->logger->info('Notification envoyée', [
             'title' => $job->getTitle(),

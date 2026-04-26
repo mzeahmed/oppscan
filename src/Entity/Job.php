@@ -35,6 +35,9 @@ class Job
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $notifiedAt = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -126,5 +129,15 @@ class Job
         $this->createdAt = $createdAt;
 
         return $this;
+    }
+
+    public function getNotifiedAt(): ?\DateTimeImmutable
+    {
+        return $this->notifiedAt;
+    }
+
+    public function markAsNotified(): void
+    {
+        $this->notifiedAt = new \DateTimeImmutable();
     }
 }
