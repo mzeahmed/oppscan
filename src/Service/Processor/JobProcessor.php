@@ -23,6 +23,7 @@ final class JobProcessor
         private readonly ScoringService $scoringService,
         private readonly NotificationService $notificationService,
         private readonly LoggerInterface $logger,
+        private readonly array $filterKeywords = [],
     ) {
     }
 
@@ -31,10 +32,8 @@ final class JobProcessor
         $title = strtolower($dto->title);
         $desc = strtolower($dto->description);
 
-        $keywords = ['php', 'symfony', 'wordpress', 'backend', 'fullstack', 'api'];
-
         $matches = false;
-        foreach ($keywords as $keyword) {
+        foreach ($this->filterKeywords as $keyword) {
             if (str_contains($title, $keyword) || str_contains($desc, $keyword)) {
                 $matches = true;
                 break;

@@ -49,4 +49,9 @@ services:
     App\Service\Provider\SearxProvider:
         arguments:
             $baseUrl: '%env(SEARXNG_URL)%'
+            $searchQueries: '%app.searx_queries%'
         tags: [ 'app.job_provider' ]
+
+    App\Service\Processor\JobProcessor:
+        arguments:
+            $filterKeywords: '%app.filter_keywords%'

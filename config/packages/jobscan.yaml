@@ -1,0 +1,17 @@
+parameters:
+    app.filter_keywords:
+        - php
+        - symfony
+        - wordpress
+        - backend
+        - fullstack
+        - api
+
+    app.searx_queries:
+        - 'php symfony remote job'
+        - 'php symfony freelance remote'
+        - 'wordpress php remote developer'
+        - 'backend php api remote job'
+        - 'développeur php symfony full remote'
+        - 'développeur php WordPress'
+        - 'mission freelance php symfony remote'

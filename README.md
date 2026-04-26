@@ -65,7 +65,7 @@ make migrate
 
 ## Configuration
 
-Configurer `.env.local` :
+### Variables d'environnement — `.env.local`
 
 ```dotenv
 # LM Studio (IA locale)
@@ -86,6 +86,35 @@ JOB_FEED_URL_1=
 JOB_FEED_URL_2=
 JOB_FEED_URL_3=
 ```
+
+### Mots-clés et requêtes — `config/packages/jobscan.yaml`
+
+Les mots-clés métier et les requêtes SearXNG sont centralisés dans un seul fichier YAML :
+
+```yaml
+parameters:
+    app.filter_keywords:
+        - php
+        - symfony
+        - wordpress
+        - backend
+        - fullstack
+        - api
+
+    app.searx_queries:
+        - 'php symfony remote job'
+        - 'php symfony freelance remote'
+        - 'wordpress php remote developer'
+        - 'backend php api remote job'
+        - 'développeur php symfony full remote'
+        - 'développeur php WordPress'
+        - 'mission freelance php symfony remote'
+```
+
+* **`app.filter_keywords`** : termes utilisés par le pipeline pour écarter les offres hors scope avant tout traitement IA
+* **`app.searx_queries`** : requêtes envoyées à SearXNG à chaque run
+
+Pour adapter JOBSCAN à un autre profil (ex : Python / Django, ou Java / Spring), il suffit de modifier ce fichier — sans toucher au code PHP.
 
 ---
 

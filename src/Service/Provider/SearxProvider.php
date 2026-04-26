@@ -10,20 +10,11 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 final class SearxProvider implements JobProviderInterface
 {
-    private const QUERIES = [
-        'php symfony remote job',
-        'php symfony freelance remote',
-        'wordpress php remote developer',
-        'backend php api remote job',
-        'développeur php symfony full remote',
-        'développeur php WordPress',
-        'mission freelance php symfony remote',
-    ];
-
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger,
         private readonly string $baseUrl,
+        private readonly array $searchQueries = [],
     ) {
     }
 
@@ -34,7 +25,7 @@ final class SearxProvider implements JobProviderInterface
     {
         $jobs = [];
 
-        foreach (self::QUERIES as $query) {
+        foreach ($this->searchQueries as $query) {
             foreach ($this->search($query) as $result) {
                 $title = trim((string) ($result['title'] ?? ''));
                 $url = trim((string) ($result['url'] ?? ''));
