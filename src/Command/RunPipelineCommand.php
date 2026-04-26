@@ -33,7 +33,7 @@ final class RunPipelineCommand extends Command
         $start = microtime(true);
 
         $io = new SymfonyStyle($input, $output);
-        $io->title('JOBSCAN — Pipeline offres freelance PHP/Symfony');
+        $io->title('JOBSCAN — Pipeline offres freelance/CDI PHP/Symfony/WordPress');
 
         $total = 0;
 

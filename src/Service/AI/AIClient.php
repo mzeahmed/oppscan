@@ -79,6 +79,11 @@ final class AIClient
 
             $parsed = json_decode($content, true);
             if (\is_array($parsed)) {
+                $this->logger->debug('AIClient: réponse parsée avec succès.', [
+                    'content' => $content,
+                    'parsed' => $parsed,
+                ]);
+
                 return $this->normalize($parsed);
             }
 
@@ -86,6 +91,12 @@ final class AIClient
                 $parsed = json_decode($matches[0], true);
 
                 if (\is_array($parsed)) {
+                    $this->logger->debug('AIClient: réponse parsée avec succès après extraction heuristique.', [
+                        'content' => $content,
+                        'extracted' => $matches[0],
+                        'parsed' => $parsed,
+                    ]);
+
                     return $this->normalize($parsed);
                 }
             }
@@ -116,7 +127,7 @@ final class AIClient
 
         return [
             'stack' => array_values(array_unique(array_map(
-                static fn ($item) => strtolower(trim((string) $item)),
+                static fn($item) => strtolower(trim((string) $item)),
                 (array) ($data['stack'] ?? [])
             ))),
             'contract_type' => $contractType,
@@ -185,7 +196,7 @@ final class AIClient
 
         return array_values(array_filter(
             $known,
-            static fn (string $tech) => str_contains($text, $tech)
+            static fn(string $tech) => str_contains($text, $tech)
         ));
     }
 
