@@ -27,6 +27,9 @@ final class JobProcessor
     ) {
     }
 
+    /**
+     * @throws \Psr\Cache\InvalidArgumentException
+     */
     public function process(JobDTO $dto): void
     {
         $title = strtolower($dto->title);
@@ -68,17 +71,18 @@ final class JobProcessor
         }
 
         $aiData = $this->AIClient->analyze($dto->description);
-        $score = $this->scoringService->compute($dto, $aiData);
+        ['score' => $score, 'breakdown' => $breakdown] = $this->scoringService->compute($dto, $aiData);
 
         $job = Job::fromDTO($dto);
         $job->setScore($score);
 
         $this->jobRepository->save($job);
 
-        $this->logger->info('Job sauvegardé : {title} (score: {score}, source: {source})', [
+        $this->logger->info('Job sauvegardé : {title} (score: {score}, source: {source}) — {breakdown}', [
             'title' => $dto->title,
             'score' => $score,
             'source' => $dto->source,
+            'breakdown' => implode(', ', $breakdown) ?: 'aucun critère',
         ]);
 
         if ($score >= self::NOTIFICATION_THRESHOLD) {

@@ -28,7 +28,11 @@ final class ScoringService
             $score += 10;
         }
 
-        if (str_contains($text, 'remote') || str_contains($text, 'télétravail') || str_contains($text, 'teletravail')) {
+        if (
+            str_contains($text, 'remote')
+            || str_contains($text, 'télétravail')
+            || str_contains($text, 'teletravail')
+        ) {
             $score += 5;
         }
 
@@ -46,83 +50,71 @@ final class ScoringService
     /**
      * Score final sur 100, basé sur les données IA enrichies.
      *
-     * Bonus :
-     *   PHP dans le titre        → +20
-     *   Symfony dans la stack    → +30
-     *   WordPress dans la stack  → +20
-     *   Freelance                → +15
-     *   CDI                      → +10
-     *   Remote                   → +10
-     *   Offre récente            → +20
-     *   Senior                   → +10
-     *   Mission                  → +10
-     *   Urgent / ASAP            → +15
-     *
-     * Malus :
-     *   Stage                    → -50
-     *   Alternance               → -50
-     *   Junior                   → -20
+     * @return array{score: int, breakdown: string[]}
      */
-    public function compute(JobDTO $job, array $ai): int
+    public function compute(JobDTO $job, array $ai): array
     {
         $score = 0;
+        $breakdown = [];
         $desc = strtolower($job->description);
 
         if (str_contains(strtolower($job->title), 'php')) {
             $score += 20;
+            $breakdown[] = '+20 (PHP titre)';
         }
 
         $stack = array_map('strtolower', $ai['stack'] ?? []);
 
         if (\in_array('symfony', $stack, true)) {
             $score += 30;
+            $breakdown[] = '+30 (Symfony stack)';
         }
 
         if (\in_array('wordpress', $stack, true)) {
             $score += 20;
+            $breakdown[] = '+20 (WordPress stack)';
         }
 
         $contractType = $ai['contract_type'] ?? 'unknown';
         if ('freelance' === $contractType || ($ai['freelance'] ?? false)) {
             $score += 15;
+            $breakdown[] = '+15 (freelance)';
         } elseif ('cdi' === $contractType) {
             $score += 10;
+            $breakdown[] = '+10 (CDI)';
         }
 
         if ($ai['remote'] ?? false) {
             $score += 10;
+            $breakdown[] = '+10 (remote)';
         }
 
         if ($ai['recent'] ?? false) {
             $score += 20;
-        }
-
-        $seniority = $ai['seniority'] ?? 'unknown';
-        if ('senior' === $seniority || str_contains($desc, 'senior') || str_contains($desc, 'confirmé')) {
-            $score += 10;
+            $breakdown[] = '+20 (offre récente)';
         }
 
         if (str_contains($desc, 'mission')) {
             $score += 10;
+            $breakdown[] = '+10 (mission)';
         }
 
         if (str_contains($desc, 'urgent') || str_contains($desc, 'asap')) {
             $score += 15;
+            $breakdown[] = '+15 (urgent/ASAP)';
         }
 
-        // Malus
         if (str_contains($desc, 'stage')) {
             $score -= 50;
+            $breakdown[] = '-50 (stage)';
         }
 
         if (str_contains($desc, 'alternance')) {
             $score -= 50;
+            $breakdown[] = '-50 (alternance)';
         }
 
-        if ('junior' === $seniority || str_contains($desc, 'junior')) {
-            $score -= 20;
-        }
 
-        return max(0, min($score, 100));
+        return ['score' => max(0, min($score, 100)), 'breakdown' => $breakdown];
     }
 }

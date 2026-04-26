@@ -321,14 +321,12 @@ En cas d'échec de l'analyse IA, JOBSCAN utilise un **fallback heuristique** bas
 | CDI                     |    +15 |
 | Remote                  |    +10 |
 | Offre récente           |    +20 |
-| Mention senior          |    +10 |
 | Mention mission         |    +10 |
 | Urgent / ASAP           |    +15 |
 | Stage                   |    -50 |
 | Alternance              |    -50 |
-| Junior                  |    -20 |
 
-Une notification est déclenchée à partir de **70/100**.
+Une notification est déclenchée à partir de **60/100**.
 
 ---
 
