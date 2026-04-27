@@ -8,6 +8,24 @@ use App\DTO\JobDTO;
 
 final class ScoringService
 {
+    /**
+     * @param array{
+     *     prescore: array{
+     *         keywords: array<string, int>,
+     *         remote_keywords: list<string>,
+     *         remote_bonus: int,
+     *         negative_keywords: array<string, int>,
+     *     },
+     *     compute: array{
+     *         title_keywords: array<string, int>,
+     *         stack_keywords: array<string, int>,
+     *         contract_bonuses: array<string, int>,
+     *         flag_bonuses: array<string, int>,
+     *         description_keywords: array<string, int>,
+     *         negative_keywords: array<string, int>,
+     *     },
+     * } $scoringConfig
+     */
     public function __construct(
         private readonly array $scoringConfig,
     ) {
@@ -47,6 +65,8 @@ final class ScoringService
     /**
      * Score final sur 100, basé sur les données IA enrichies.
      *
+     * @param array{stack: list<string>, contract_type: string, freelance: bool, remote: bool, budget: string, recent: bool, seniority: string} $ai
+     *
      * @return array{score: int, breakdown: string[]}
      */
     public function compute(JobDTO $job, array $ai): array
@@ -56,7 +76,7 @@ final class ScoringService
         $config = $this->scoringConfig['compute'];
         $title = strtolower($job->title);
         $desc = strtolower($job->description);
-        $stack = array_map('strtolower', $ai['stack'] ?? []);
+        $stack = array_map('strtolower', $ai['stack']);
 
         foreach ($config['title_keywords'] as $keyword => $points) {
             if (str_contains($title, $keyword)) {
@@ -72,8 +92,8 @@ final class ScoringService
             }
         }
 
-        $contractType = $ai['contract_type'] ?? 'unknown';
-        if ('freelance' === $contractType || ($ai['freelance'] ?? false)) {
+        $contractType = $ai['contract_type'];
+        if ('freelance' === $contractType || $ai['freelance']) {
             $points = $config['contract_bonuses']['freelance'];
             $score += $points;
             $breakdown[] = sprintf('%+d (freelance)', $points);

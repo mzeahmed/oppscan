@@ -123,6 +123,15 @@ hard: ## Reinitialisation du dépôt (attention, toutes les modifications non co
 	git clean -fd
 	@echo "$(GREEN)Dépôt réinitialisé.$(NO_COLOR)"
 
+
+# ========================
+# TESTES
+# ========================
+test: ## Lancement des tests PHPUnit
+	@echo "$(YELLOW)Lancement des tests PHPUnit...$(NO_COLOR)"
+	php bin/phpunit
+	@echo "$(GREEN)Tests PHPUnit terminés$(NO_COLOR)"
+
 # ========================
 # PERMISSIONS
 # ========================
