@@ -1,4 +1,4 @@
-.PHONY: help build up down logs bash migrate run-pipeline alerts fix-perms
+.PHONY: help setup build up down logs bash migrate run-pipeline alerts fix-perms
 
 COMPOSE = docker compose -f docker-compose.yml
 COMPOSE_PROD = docker compose -f docker-compose.yml -f docker-compose.prod.yml
@@ -10,6 +10,10 @@ GREEN=\033[0;32m
 YELLOW=\033[0;33m
 BLUE=\033[0;34m
 NO_COLOR=\033[0m
+
+setup: ## Configure le dépôt (git hooks, etc.)
+	git config core.hooksPath .githooks
+	@echo "$(GREEN)Git hooks configurés → .githooks$(NO_COLOR)"
 
 help: ## Affiche la liste des commandes disponibles
 	@echo ""
