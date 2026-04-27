@@ -47,5 +47,8 @@ jobs:
             -   name: Install dependencies
                 run: composer install --prefer-dist --no-progress --no-interaction --no-scripts
 
+            -   name: Setup environment
+                run: cp .env.example .env
+
             -   name: PHPUnit
                 run: ./vendor/bin/phpunit --no-coverage
