@@ -413,8 +413,7 @@ cp .env .env.local
 make migrate
 ```
 
-Avant chaque commit : Pint s'exécute automatiquement via le hook `pre-commit`.
-Avant chaque push : PHPStan s'exécute via le hook `pre-push`.
+Avant chaque push : PHPStan et Pint s'exécutent via le hook `pre-push`, et si ça ne passe pas le push est bloqué. Assurez-vous de corriger les erreurs avant de pousser.
 
 ---
 
