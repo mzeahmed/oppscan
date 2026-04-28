@@ -14,7 +14,7 @@
 .idea
 .vscode
 
-IMPROVEMENTS.md
+/docs/IMPROVEMENTS.md
 
 ###> phpunit/phpunit ###
 /phpunit.xml
