@@ -124,12 +124,23 @@ hard: ## Reinitialisation du dépôt (attention, toutes les modifications non co
 	@echo "$(GREEN)Dépôt réinitialisé.$(NO_COLOR)"
 
 clean: ## Supprimer toutes les branches locales et distantes sauf main
-	@echo "$(RED)⚠️  Cette action va supprimer toutes les branches locales et distantes sauf main.$(NO_COLOR)"
-	@printf "Confirmer ? [y/N] " && read ans && [ "$$ans" = "y" ] || (echo "Annulé." && exit 1)
-	@echo "$(YELLOW)Suppression des branches...$(NO_COLOR)"
-	git branch | grep -vE '^\*? (main)$' | xargs git branch -D
-	git branch -r | grep -vE '^\*? (origin/(main))$' | sed 's/origin\///' | xargs -I {} git push origin --delete {}
-	@echo "$(GREEN)Branches supprimées.$(NO_COLOR)"
+	@echo "$(YELLOW)Branches locales à supprimer :$(NO_COLOR)"
+	@git branch | grep -vE '^\*|main' || echo "  (aucune)"
+	@echo "$(YELLOW)Branches distantes à supprimer :$(NO_COLOR)"
+	@git fetch --prune -q && git branch -r | grep -vE 'origin/(main)' | sed 's/origin\///' || echo "  (aucune)"
+	@echo ""
+	@printf "$(RED)⚠️  Confirmer la suppression ? [y/N] $(NO_COLOR)" && read ans && [ "$${ans}" = "y" ] || { echo "$(YELLOW)Annulé.$(NO_COLOR)"; exit 1; }
+
+	@echo "$(YELLOW)Nettoyage des références distantes obsolètes...$(NO_COLOR)"
+	@git fetch --prune
+
+	@echo "$(YELLOW)Suppression des branches locales...$(NO_COLOR)"
+	@git branch | grep -vE '^\*|main' | xargs -r git branch -D || true
+
+	@echo "$(YELLOW)Suppression des branches distantes...$(NO_COLOR)"
+	@git branch -r | grep -vE 'origin/(main)' | sed 's/origin\///' | xargs -r -I {} git push origin --delete {} || true
+
+	@echo "$(GREEN)Nettoyage des branches terminé$(NO_COLOR)"
 
 
 # ========================
